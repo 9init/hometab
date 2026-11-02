@@ -67,12 +67,22 @@ Sessions are stored in `~/.local/share/hometab`.
 
 ## Install
 
+You need Go 1.24 or newer:
+
 ```sh
-make install
+go install github.com/9init/hometab@latest
 ```
 
-This installs the binary to `~/.local/bin` and the man pages, so `man hometab`
-and `man hometab-run` work.
+That puts `hometab` in `~/go/bin`, so make sure it's on your `PATH`.
+
+If you'd rather build from a clone, `make install` does the same and also
+installs the man pages to `~/.local`.
+
+To get tab completion, add this to your `.zshrc` (or the bash/fish equivalent):
+
+```sh
+source <(hometab completion zsh)
+```
 
 ## License
 
