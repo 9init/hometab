@@ -105,3 +105,20 @@ func TestRemove(t *testing.T) {
 		t.Errorf("second remove: %v", err)
 	}
 }
+
+func TestRemoveReadOnlyDirs(t *testing.T) {
+	st := newStore(t)
+	s := mustCreate(t, st, "a")
+	locked := filepath.Join(s.Dir, "go", "pkg", "mod")
+	os.MkdirAll(locked, 0o700)
+	os.WriteFile(filepath.Join(locked, "f"), []byte("x"), 0o400)
+	os.Chmod(locked, 0o500)
+	os.Chmod(filepath.Dir(locked), 0o500)
+
+	if err := st.Remove("a"); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := os.Stat(s.Dir); !errors.Is(err, os.ErrNotExist) {
+		t.Error("session still exists")
+	}
+}

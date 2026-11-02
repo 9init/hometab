@@ -3,6 +3,7 @@ package session
 import (
 	"errors"
 	"fmt"
+	"io/fs"
 	"os"
 	"os/user"
 	"path/filepath"
@@ -79,7 +80,27 @@ func (st *Store) Remove(name string) error {
 	if err != nil {
 		return err
 	}
+	if err := os.RemoveAll(s.Dir); err == nil {
+		return nil
+	}
+	// Some tools, like Go's module cache, leave directories read-only.
+	if err := makeWritable(s.Dir); err != nil {
+		return fmt.Errorf("remove %s: %w", name, err)
+	}
 	return os.RemoveAll(s.Dir)
+}
+
+func makeWritable(root string) error {
+	return filepath.WalkDir(root, func(path string, d fs.DirEntry, err error) error {
+		if err != nil || !d.IsDir() {
+			return err
+		}
+		info, err := d.Info()
+		if err != nil {
+			return err
+		}
+		return os.Chmod(path, info.Mode().Perm()|0o700)
+	})
 }
 
 func (st *Store) existing(name string) (Session, error) {
